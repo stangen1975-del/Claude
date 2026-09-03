@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Email List Processor</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #242836;
+    --border: #2e3345;
+    --text: #e4e6f0;
+    --text-dim: #8b8fa3;
+    --accent: #6c5ce7;
+    --accent-hover: #7e70f0;
+    --green: #00b894;
+    --red: #e74c3c;
+    --orange: #f39c12;
+    --blue: #0984e3;
+    --radius: 10px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  header {
+    text-align: center;
+    padding: 32px 0 24px;
+  }
+
+  header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  header p {
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 4px;
+    margin-bottom: 20px;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  .tab.active {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .tab:hover:not(.active) {
+    color: var(--text);
+    background: var(--surface2);
+  }
+
+  .panel {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+
+  .panel.active { display: block; }
+
+  .drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 48px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(108, 92, 231, 0.05);
+  }
+
+  .drop-zone p { color: var(--text-dim); margin-top: 8px; font-size: 13px; }
+  .drop-zone .icon { font-size: 36px; }
+
+  input[type="file"] { display: none; }
+
+  textarea {
+    width: 100%;
+    min-height: 160px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 12px;
+    font-size: 14px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    resize: vertical;
+  }
+
+  textarea:focus { outline: none; border-color: var(--accent); }
+
+  .input-group {
+    margin-bottom: 16px;
+  }
+
+  .input-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: var(--text-dim);
+  }
+
+  .input-row {
+    display: flex;
+    gap: 12px;
+  }
+
+  .input-row input[type="text"] {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  .input-row input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .btn-secondary {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .btn-secondary:hover { background: var(--border); }
+
+  .btn-sm {
+    padding: 6px 14px;
+    font-size: 13px;
+  }
+
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 20px 0;
+  }
+
+  .option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: var(--surface2);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .option:hover { background: var(--border); }
+
+  .option input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .option .opt-label {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .option .opt-desc {
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .stats-bar {
+    display: flex;
+    gap: 12px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    flex: 1;
+    min-width: 120px;
+    padding: 16px;
+    background: var(--surface2);
+    border-radius: var(--radius);
+    text-align: center;
+  }
+
+  .stat .num {
+    font-size: 28px;
+    font-weight: 700;
+  }
+
+  .stat .lbl {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .stat.total .num { color: var(--blue); }
+  .stat.valid .num { color: var(--green); }
+  .stat.invalid .num { color: var(--red); }
+  .stat.dup .num { color: var(--orange); }
+  .stat.filt .num { color: var(--text-dim); }
+
+  .results-table-wrap {
+    overflow-x: auto;
+    margin-top: 16px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  th {
+    background: var(--surface2);
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    position: sticky;
+    top: 0;
+  }
+
+  td {
+    padding: 8px 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .badge-valid { background: rgba(0,184,148,0.15); color: var(--green); }
+  .badge-invalid { background: rgba(231,76,60,0.15); color: var(--red); }
+  .badge-duplicate { background: rgba(243,156,18,0.15); color: var(--orange); }
+  .badge-filtered { background: rgba(139,143,163,0.15); color: var(--text-dim); }
+
+  .toolbar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .toolbar select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .toolbar select:focus { outline: none; border-color: var(--accent); }
+
+  .progress-bar {
+    width: 100%;
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 16px 0;
+    display: none;
+  }
+
+  .progress-bar .fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.3s;
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  .alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin: 12px 0;
+  }
+
+  .alert-info {
+    background: rgba(9,132,227,0.1);
+    border: 1px solid rgba(9,132,227,0.2);
+    color: var(--blue);
+  }
+
+  .alert-error {
+    background: rgba(231,76,60,0.1);
+    border: 1px solid rgba(231,76,60,0.2);
+    color: var(--red);
+  }
+
+  .email-count {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 8px;
+  }
+
+  .section-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 24px 0 12px;
+  }
+
+  .section-title:first-child { margin-top: 0; }
+
+  .domains-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  .domains-input:focus { outline: none; border-color: var(--accent); }
+
+  .results-section {
+    display: none;
+  }
+
+  .results-section.visible { display: block; }
+
+  .filter-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+  }
+
+  .filter-tab {
+    padding: 6px 16px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+
+  .filter-tab.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  .filter-tab:hover:not(.active) {
+    border-color: var(--text-dim);
+    color: var(--text);
+  }
+
+  .max-height-table {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Email List Processor</h1>
+    <p>Upload, validate, filter, and export email lists</p>
+  </header>
+
+  <!-- Input Tabs -->
+  <div class="tabs">
+    <button class="tab active" data-tab="upload">Upload File</button>
+    <button class="tab" data-tab="paste">Paste Emails</button>
+    <button class="tab" data-tab="scrape">Scrape URL</button>
+  </div>
+
+  <!-- Upload Panel -->
+  <div class="panel active" id="panel-upload">
+    <div class="drop-zone" id="dropZone">
+      <div class="icon">&#128233;</div>
+      <div style="font-size:16px;font-weight:600;margin-top:8px;">Drop file here or click to browse</div>
+      <p>Supports CSV, TXT, XLS, XLSX (max 50 MB)</p>
+      <input type="file" id="fileInput" accept=".csv,.txt,.xls,.xlsx">
+    </div>
+    <div id="uploadStatus"></div>
+  </div>
+
+  <!-- Paste Panel -->
+  <div class="panel" id="panel-paste">
+    <div class="input-group">
+      <label>Paste email addresses (one per line or comma-separated)</label>
+      <textarea id="pasteArea" placeholder="user1@example.com&#10;user2@example.com&#10;user3@domain.com"></textarea>
+    </div>
+    <div style="margin-top:12px;">
+      <button class="btn btn-primary" id="btnParse">Extract Emails</button>
+    </div>
+    <div id="pasteStatus"></div>
+  </div>
+
+  <!-- Scrape Panel -->
+  <div class="panel" id="panel-scrape">
+    <div class="input-group">
+      <label>Enter URL to scrape emails from</label>
+      <div class="input-row">
+        <input type="text" id="scrapeUrl" placeholder="https://example.com/contact">
+        <button class="btn btn-primary" id="btnScrape">Scrape</button>
+      </div>
+    </div>
+    <div id="scrapeStatus"></div>
+  </div>
+
+  <!-- Loaded Emails Info -->
+  <div id="emailsLoaded" class="alert alert-info" style="display:none;"></div>
+
+  <!-- Processing Options -->
+  <div id="optionsSection" style="display:none;">
+    <div class="section-title">Processing Options</div>
+    <div class="options-grid">
+      <label class="option">
+        <input type="checkbox" id="optDuplicates" checked>
+        <div>
+          <div class="opt-label">Remove Duplicates</div>
+          <div class="opt-desc">Filter out repeated email addresses</div>
+        </div>
+      </label>
+      <label class="option">
+        <input type="checkbox" id="optSyntax" checked>
+        <div>
+          <div class="opt-label">Validate Syntax</div>
+          <div class="opt-desc">Check email format (RFC 5322)</div>
+        </div>
+      </label>
+      <label class="option">
+        <input type="checkbox" id="optDns" checked>
+        <div>
+          <div class="opt-label">Verify DNS/MX</div>
+          <div class="opt-desc">Check domain has valid MX records</div>
+        </div>
+      </label>
+      <label class="option">
+        <input type="checkbox" id="optRole">
+        <div>
+          <div class="opt-label">Filter Role-Based</div>
+          <div class="opt-desc">Remove info@, admin@, support@, etc.</div>
+        </div>
+      </label>
+      <label class="option">
+        <input type="checkbox" id="optDisposable" checked>
+        <div>
+          <div class="opt-label">Filter Disposable</div>
+          <div class="opt-desc">Remove temporary email providers</div>
+        </div>
+      </label>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+      <div class="input-group">
+        <label>Allowed Domains (comma-separated, leave empty for all)</label>
+        <input type="text" class="domains-input" id="allowedDomains" placeholder="gmail.com, yahoo.com">
+      </div>
+      <div class="input-group">
+        <label>Blocked Domains (comma-separated)</label>
+        <input type="text" class="domains-input" id="blockedDomains" placeholder="spam.com, fake.com">
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="btnProcess" style="width:100%;padding:14px;">
+      Process Email List
+    </button>
+    <div class="progress-bar" id="progressBar">
+      <div class="fill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="results-section" id="resultsSection">
+    <div class="section-title">Results</div>
+
+    <div class="stats-bar">
+      <div class="stat total"><div class="num" id="statTotal">0</div><div class="lbl">Total</div></div>
+      <div class="stat valid"><div class="num" id="statValid">0</div><div class="lbl">Valid</div></div>
+      <div class="stat invalid"><div class="num" id="statInvalid">0</div><div class="lbl">Invalid</div></div>
+      <div class="stat dup"><div class="num" id="statDup">0</div><div class="lbl">Duplicates</div></div>
+      <div class="stat filt"><div class="num" id="statFilt">0</div><div class="lbl">Filtered</div></div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:12px;">
+      <div class="filter-tabs">
+        <button class="filter-tab active" data-filter="all">All</button>
+        <button class="filter-tab" data-filter="valid">Valid</button>
+        <button class="filter-tab" data-filter="invalid">Invalid</button>
+        <button class="filter-tab" data-filter="duplicate">Duplicates</button>
+        <button class="filter-tab" data-filter="filtered">Filtered</button>
+      </div>
+      <div class="toolbar">
+        <select id="exportFormat">
+          <option value="csv">CSV</option>
+          <option value="xlsx">Excel (.xlsx)</option>
+          <option value="txt">Text (.txt)</option>
+        </select>
+        <select id="exportFilter">
+          <option value="valid">Valid Only</option>
+          <option value="all">All</option>
+          <option value="invalid">Invalid Only</option>
+        </select>
+        <button class="btn btn-secondary btn-sm" id="btnExport">Export</button>
+      </div>
+    </div>
+
+    <div class="results-table-wrap max-height-table">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Email</th>
+            <th>Status</th>
+            <th>Reason</th>
+          </tr>
+        </thead>
+        <tbody id="resultsBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const state = {
+  emails: [],
+  results: [],
+  currentFilter: 'all'
+};
+
+// Tab switching
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
+// Drag and drop
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  if (e.dataTransfer.files.length) {
+    fileInput.files = e.dataTransfer.files;
+    uploadFile(e.dataTransfer.files[0]);
+  }
+});
+fileInput.addEventListener('change', () => {
+  if (fileInput.files.length) uploadFile(fileInput.files[0]);
+});
+
+async function uploadFile(file) {
+  const status = document.getElementById('uploadStatus');
+  status.innerHTML = '<div class="alert alert-info">Uploading and parsing...</div>';
+
+  const form = new FormData();
+  form.append('file', file);
+
+  try {
+    const resp = await fetch('/api/upload', { method: 'POST', body: form });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error);
+
+    state.emails = data.emails;
+    status.innerHTML = '';
+    showEmailsLoaded(data.email_count, file.name);
+  } catch (err) {
+    status.innerHTML = '<div class="alert alert-error">' + escapeHtml(err.message) + '</div>';
+  }
+}
+
+// Paste
+document.getElementById('btnParse').addEventListener('click', async () => {
+  const text = document.getElementById('pasteArea').value.trim();
+  const status = document.getElementById('pasteStatus');
+  if (!text) { status.innerHTML = '<div class="alert alert-error">Please paste some emails</div>'; return; }
+
+  try {
+    const resp = await fetch('/api/paste', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error);
+
+    state.emails = data.emails;
+    status.innerHTML = '';
+    showEmailsLoaded(data.email_count, 'pasted text');
+  } catch (err) {
+    status.innerHTML = '<div class="alert alert-error">' + escapeHtml(err.message) + '</div>';
+  }
+});
+
+// Scrape
+document.getElementById('btnScrape').addEventListener('click', async () => {
+  const url = document.getElementById('scrapeUrl').value.trim();
+  const status = document.getElementById('scrapeStatus');
+  if (!url) { status.innerHTML = '<div class="alert alert-error">Please enter a URL</div>'; return; }
+
+  status.innerHTML = '<div class="alert alert-info">Scraping...</div>';
+
+  try {
+    const resp = await fetch('/api/scrape', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url })
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error);
+
+    state.emails = data.emails;
+    status.innerHTML = '';
+    showEmailsLoaded(data.email_count, url);
+  } catch (err) {
+    status.innerHTML = '<div class="alert alert-error">' + escapeHtml(err.message) + '</div>';
+  }
+});
+
+function showEmailsLoaded(count, source) {
+  const el = document.getElementById('emailsLoaded');
+  el.style.display = 'block';
+  el.textContent = count + ' email(s) extracted from ' + source;
+  document.getElementById('optionsSection').style.display = 'block';
+  document.getElementById('resultsSection').classList.remove('visible');
+}
+
+// Process
+document.getElementById('btnProcess').addEventListener('click', async () => {
+  if (!state.emails.length) return;
+
+  const bar = document.getElementById('progressBar');
+  const fill = bar.querySelector('.fill');
+  bar.style.display = 'block';
+  fill.style.width = '30%';
+
+  const options = {
+    remove_duplicates: document.getElementById('optDuplicates').checked,
+    validate_syntax: document.getElementById('optSyntax').checked,
+    check_dns: document.getElementById('optDns').checked,
+    filter_role: document.getElementById('optRole').checked,
+    filter_disposable: document.getElementById('optDisposable').checked,
+    allowed_domains: document.getElementById('allowedDomains').value,
+    blocked_domains: document.getElementById('blockedDomains').value,
+  };
+
+  try {
+    fill.style.width = '60%';
+    const resp = await fetch('/api/process', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ emails: state.emails, options })
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error);
+
+    fill.style.width = '100%';
+    state.results = data.results;
+
+    document.getElementById('statTotal').textContent = data.stats.total;
+    document.getElementById('statValid').textContent = data.stats.valid;
+    document.getElementById('statInvalid').textContent = data.stats.invalid;
+    document.getElementById('statDup').textContent = data.stats.duplicates;
+    document.getElementById('statFilt').textContent = data.stats.filtered;
+
+    state.currentFilter = 'all';
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.toggle('active', t.dataset.filter === 'all'));
+    renderTable('all');
+
+    document.getElementById('resultsSection').classList.add('visible');
+
+    setTimeout(() => { bar.style.display = 'none'; fill.style.width = '0%'; }, 500);
+  } catch (err) {
+    bar.style.display = 'none';
+    fill.style.width = '0%';
+    alert('Processing error: ' + err.message);
+  }
+});
+
+// Filter tabs
+document.querySelectorAll('.filter-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    state.currentFilter = tab.dataset.filter;
+    renderTable(tab.dataset.filter);
+  });
+});
+
+function renderTable(filter) {
+  const tbody = document.getElementById('resultsBody');
+  const rows = filter === 'all' ? state.results : state.results.filter(r => r.status === filter);
+
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--text-dim)">No results</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows.map((r, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td style="font-family:monospace">${escapeHtml(r.email)}</td>
+      <td><span class="badge badge-${r.status}">${r.status}</span></td>
+      <td style="color:var(--text-dim)">${escapeHtml(r.reason || '-')}</td>
+    </tr>
+  `).join('');
+}
+
+// Export
+document.getElementById('btnExport').addEventListener('click', async () => {
+  if (!state.results.length) return;
+
+  const format = document.getElementById('exportFormat').value;
+  const filterStatus = document.getElementById('exportFilter').value;
+
+  try {
+    const resp = await fetch('/api/export', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ results: state.results, format, filter_status: filterStatus })
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(err.error);
+    }
+
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const ext = format === 'xlsx' ? 'xlsx' : format === 'txt' ? 'txt' : 'csv';
+    a.download = 'emails_export.' + ext;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    alert('Export error: ' + err.message);
+  }
+});
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+</script>
+</body>
+</html>
